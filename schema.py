@@ -1,0 +1,21 @@
+import psycopg2 
+
+con=psycopg2.connect(dbname='BI_project',user='postgres',password='admin')
+cur=con.cursor()
+
+cur.execute('CREATE SCHEMA dw_schema')
+cur.execute("set search_path to dw_schema")
+
+cur.execute('CREATE TABLE dim_commune (COMMUNE_ID SERIAL ,CODE_POSTAL VARCHAR(50),RUE VARCHAR(50),COMMUNE VARCHAR(50))')
+cur.execute('ALTER TABLE dim_commune ADD CONSTRAINT pk_com PRIMARY KEY (COMMUNE_ID)')
+cur.execute('CREATE TABLE dim_date (DATE_ID SERIAL ,Date_début VARCHAR(50),Date_fin VARCHAR(50),année VARCHAR(4))')
+cur.execute('ALTER TABLE dim_date ADD CONSTRAINT pk_date PRIMARY KEY (DATE_ID)')
+cur.execute('CREATE TABLE dim_hotel (Id VARCHAR(50),NOM_OFFRE VARCHAR(150),CLASSEMENT VARCHAR(1),CAPACITE_NBRE_PERS VARCHAR(10))')
+cur.execute('ALTER TABLE dim_hotel ADD CONSTRAINT pk_hotel PRIMARY KEY (Id)')
+cur.execute('CREATE TABLE fact_hebergement (COMMUNE_ID int,DATE_ID int,Id VARCHAR(50),Tarif_logement int,Tarif_SERVICES int)')
+cur.execute('ALTER TABLE fact_hebergement ADD CONSTRAINT fk_com FOREIGN KEY (COMMUNE_ID) REFERENCES dim_commune(COMMUNE_ID) ON DELETE CASCADE')
+cur.execute('ALTER TABLE fact_hebergement ADD CONSTRAINT fk_date FOREIGN KEY (DATE_ID) REFERENCES dim_date(DATE_ID) ON DELETE CASCADE')
+cur.execute('ALTER TABLE fact_hebergement ADD CONSTRAINT fk_hotel FOREIGN KEY (Id) REFERENCES dim_hotel(Id) ON DELETE CASCADE')
+
+con.commit()
+#print("succes")
