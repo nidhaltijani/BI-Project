@@ -2,6 +2,7 @@ from pygrametl.datasources import CSVSource,FilteringSource,TransformingSource
 from pygrametl.tables import Dimension,FactTable
 from pygrametl import ConnectionWrapper
 import psycopg2 
+
 f=CSVSource(open('data.csv', 'r', 16384),delimiter=",")
 
 def filter_blank(row):
@@ -39,11 +40,35 @@ def get_year(row):
 def transform_semaines(row):
     row["Nombre_Semaine_Heberge"]=int(int(row["Nombre_Semaine_Heberge"])/1200)
 
-"""def transform_infos(row):
-    l=row['INFOS_COMPLEMENTAIRES'].split("#")
-    l1=[i for i in l if i..isprintable()]
-    row['INFOS_COMPLEMENTAIRES']=l1
-    #row['INFOS_COMPLEMENTAIRES']=re.sub(r'[\W_]', '', row['INFOS_COMPLEMENTAIRES'])"""
+
+
+def transform_infos(row):
+    l=row['INFOS_COMPLEMENTAIRES']
+    l=l.split("#")
+    for i in range(len(l)):
+        if 'Ã¯Â¿Â½' in l[i]:
+            l[i]=l[i].replace('Ã¯Â¿Â½', 'e')
+        if "Ceble" in l[i]:
+            l[i]=l[i].replace("Ceble", 'Cable')
+    row['INFOS_COMPLEMENTAIRES']=l
+    
+def transform_infos2(row):
+    l=row['NOM_OFFRE']
+    l=l.split(" ")
+    for i in range(len(l)):
+        if 'Ã¯Â¿Â½' in l[i]:
+            l [i]=l[i].replace('Ã¯Â¿Â½', 'e')
+     
+    row['NOM_OFFRE']=' '.join(l)
+
+def transform_infos3(row):
+    l=row['RUE']
+    l=l.split(" ")
+    for i in range(len(l)):
+        if 'Ã¯Â¿Â½' in l[i]:
+            l [i]=l[i].replace('Ã¯Â¿Â½', 'e')
+    
+    row['RUE']=' '.join(l)
 
 
     
@@ -52,23 +77,27 @@ data_transformed=TransformingSource(data_transformed,transform_classement)
 data_transformed=TransformingSource(data_transformed,transform_date)
 data_transformed=TransformingSource(data_transformed,transform_semaines)
 data_transformed=TransformingSource(data_transformed,get_year)
-#data_transformed=TransformingSource(data_transformed,transform_infos)
+data_transformed=TransformingSource(data_transformed,transform_infos)
+data_transformed=TransformingSource(data_transformed,transform_infos2)
+data_transformed=TransformingSource(data_transformed,transform_infos3)
 
-i=1
+
+"""
 for row in data_transformed:
     print(row)
-    i+=1
-    if i==5:
-        break
+    """
+
+
 con=psycopg2.connect(dbname='BI_project',user='postgres',password='admin')   
 connection=ConnectionWrapper(con)
 connection.setasdefault()
 connection.execute("set search_path to dw_schema")
 
+
 #trouvez une solution pour les chars spéciaux
-dim_commune=Dimension(
-    name="dim_commune",
-    key="COMMUNE_ID",
+dim_addresse=Dimension(
+    name="dim_addresse",
+    key="ADDRESS_ID",
     attributes=["CODE_POSTAL","RUE","COMMUNE"]
 )
 
@@ -87,33 +116,33 @@ dim_hotel=Dimension(
 )
 
 
-fact_hébergement=FactTable(
-    name="fact_hébergement",
-    keyrefs=["DATE_ID","COMMUNE_ID","Id"],
+fact_hebergement=FactTable(
+    name="fact_hebergement",
+    keyrefs=["ADDRESS_ID","DATE_ID","Id"],
     measures=["Tarif_logement","Tarif_SERVICES"]
 )
 
+
+
 for row in data_transformed:
-    i={}
-    i["CODE_POSTAL"]=row["CODE_POSTAL"]
-    i["RUE"]=row["RUE"]
-    i["COMMUNE"]=row["COMMUNE"]
-    dim_commune.ensure(i)
     
-    i={}
-    i["Date_début"]=row["Date_début"]
-    i["Date_fin"]=row["Date_fin"]
-    i["année"]=row["année"]
-    dim_date.ensure(i)
+    row['ADDRESS_ID']=row['CODE_POSTAL'][:3]+row['RUE'][:3]+row['COMMUNE'][:3]
+    row['ADDRESS_ID'] = dim_addresse.ensure(row)
     
-    i={}
-    i["NOM_OFFRE"]=row["NOM_OFFRE"]
-    i["CLASSEMENT"]=row["CLASSEMENT"]
-    i["CAPACITE_NBRE_PERS"]=row["CAPACITE_NBRE_PERS"]
-    dim_hotel.ensure(i)
     
-    #TODO
-    #fact table et chars spéciauxx id hotel 
+    row['DATE_ID']=row['année']
+    row['DATE_ID'] = dim_date.ensure(row)
+    
+
+    row['Id'] = row['Id']
+    row['Id']=dim_hotel.ensure(row)
+
+
+    fact_hebergement.ensure(row)
+
+    
+    
 
 connection.commit()
-#print("success")
+print("success")
+
