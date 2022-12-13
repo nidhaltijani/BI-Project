@@ -119,7 +119,7 @@ dim_hotel=Dimension(
 fact_hebergement=FactTable(
     name="fact_hebergement",
     keyrefs=["ADDRESS_ID","DATE_ID","Id"],
-    measures=["Tarif_logement","Tarif_SERVICES"]
+    measures=["Tarif_logement","Tarif_SERVICES","Nombre_Semaine_Heberge"]
 )
 
 
@@ -145,4 +145,3 @@ for row in data_transformed:
 
 connection.commit()
 print("success")
-
