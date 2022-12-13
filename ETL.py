@@ -5,16 +5,20 @@ import psycopg2
 
 f=CSVSource(open('data.csv', 'r', 16384),delimiter=",")
 
-def filter_blank(row):
-    """check for blank values in every column of every row 
-    """
+"""def filter_blank(row):
+    
     for key in row.keys():
         if row[key]=="":
             return False
     return True
 
 
-data_cleaned=FilteringSource(f,filter_blank)
+data_cleaned=FilteringSource(f,filter_blank)"""
+
+def transform_vide(row):
+    for key in row.keys():
+        if row[key]=="":
+            row[key]="N/A"
 
 def transform_tarif(row):
     l=row['Tarif_logement'].split("|")
@@ -52,7 +56,6 @@ def transform_infos(row):
             l[i]=l[i].replace("Ceble", 'Cable')
     row['INFOS_COMPLEMENTAIRES']=l
     
-def transform_infos2(row):
     l=row['NOM_OFFRE']
     l=l.split(" ")
     for i in range(len(l)):
@@ -60,8 +63,7 @@ def transform_infos2(row):
             l [i]=l[i].replace('Ã¯Â¿Â½', 'e')
      
     row['NOM_OFFRE']=' '.join(l)
-
-def transform_infos3(row):
+    
     l=row['RUE']
     l=l.split(" ")
     for i in range(len(l)):
@@ -69,29 +71,27 @@ def transform_infos3(row):
             l [i]=l[i].replace('Ã¯Â¿Â½', 'e')
     
     row['RUE']=' '.join(l)
+    
+
 
 
     
-data_transformed=TransformingSource(data_cleaned,transform_tarif)
+data_transformed=TransformingSource(f,transform_vide)
+data_transformed=TransformingSource(data_transformed,transform_tarif)
 data_transformed=TransformingSource(data_transformed,transform_classement)
 data_transformed=TransformingSource(data_transformed,transform_date)
 data_transformed=TransformingSource(data_transformed,transform_semaines)
 data_transformed=TransformingSource(data_transformed,get_year)
 data_transformed=TransformingSource(data_transformed,transform_infos)
-data_transformed=TransformingSource(data_transformed,transform_infos2)
-data_transformed=TransformingSource(data_transformed,transform_infos3)
 
 
-"""
-for row in data_transformed:
-    print(row)
-    """
+
 
 
 con=psycopg2.connect(dbname='BI_project',user='postgres',password='admin')   
 connection=ConnectionWrapper(con)
 connection.setasdefault()
-connection.execute("set search_path to dw_schema")
+connection.execute("set search_path to dw_schema_test")
 
 
 #trouvez une solution pour les chars spéciaux
@@ -123,7 +123,7 @@ fact_hebergement=FactTable(
 )
 
 
-
+i=0
 for row in data_transformed:
     
     row['ADDRESS_ID']=row['CODE_POSTAL'][:3]+row['RUE'][:3]+row['COMMUNE'][:3]

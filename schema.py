@@ -3,8 +3,8 @@ import psycopg2
 con=psycopg2.connect(dbname='BI_project',user='postgres',password='admin')
 cur=con.cursor()
 
-cur.execute('CREATE SCHEMA dw_schema')
-cur.execute("set search_path to dw_schema")
+cur.execute('CREATE SCHEMA dw_schema_test')
+cur.execute("set search_path to dw_schema_test")
 
 cur.execute('CREATE TABLE dim_addresse (ADDRESS_ID VARCHAR(50) ,CODE_POSTAL VARCHAR(50),RUE VARCHAR(50),COMMUNE VARCHAR(50))')
 cur.execute('ALTER TABLE dim_addresse ADD CONSTRAINT pk_com PRIMARY KEY (ADDRESS_ID)')

@@ -131,7 +131,7 @@ for record in cur.fetchall():
 
 fig3,ax3=plt.subplots(figsize=(7,3))
 
-ax3.scatter(cap,nb_semaines,s=size)
+ax3.scatter(cap,nb_semaines,s=size,marker=".")
 plt.title("Nombre de semaines par rapport à la capacité d'un hôtel")
 plt.xlabel("Capacité")
 plt.ylabel("Nombre de semaines")
